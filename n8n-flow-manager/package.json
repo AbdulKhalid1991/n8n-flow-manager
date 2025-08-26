@@ -1,0 +1,55 @@
+{
+  "name": "n8n-flow-manager",
+  "version": "1.0.0",
+  "description": "Comprehensive n8n flow management system with version control, testing, and enhancement tools",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "flows:export": "node src/cli/export.js",
+    "flows:import": "node src/cli/import.js",
+    "flows:test": "node src/cli/test.js",
+    "flows:enhance": "node src/cli/enhance.js",
+    "analyze": "npm start analyze",
+    "analyze:detailed": "npm start analyze --detailed",
+    "health": "npm start health",
+    "improve": "npm start improve",
+    "improve:apply": "npm start improve --apply",
+    "improve:dry-run": "npm start improve --dry-run",
+    "plan-upgrade": "npm start plan-upgrade",
+    "quick-fix": "npm start improve --apply --priority immediate --auto",
+    "claude-code:init": "node -e \"import('./src/integration/index.js').then(m => m.initializeN8nFlowManager().then(console.log))\"",
+    "claude-code:status": "node -e \"import('./src/integration/index.js').then(m => m.getN8nSystemStatus().then(console.log))\"",
+    "claude-code:health": "node -e \"import('./src/integration/index.js').then(m => m.performHealthCheck().then(console.log))\"",
+    "claude-code:help": "node -e \"import('./src/integration/index.js').then(m => console.log(JSON.stringify(m.getAvailableOperations(), null, 2)))\""
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "chalk": "^5.3.0",
+    "commander": "^11.0.0",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "inquirer": "^9.2.0",
+    "js-yaml": "^4.1.0",
+    "simple-git": "^3.19.0",
+    "winston": "^3.17.0",
+    "ws": "^8.14.0"
+  },
+  "devDependencies": {
+    "jest": "^30.0.5",
+    "nodemon": "^3.0.0"
+  },
+  "keywords": [
+    "n8n",
+    "workflow",
+    "automation",
+    "version-control",
+    "testing"
+  ],
+  "author": "Claude Code",
+  "license": "MIT"
+}
