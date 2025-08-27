@@ -367,7 +367,8 @@ export class Logger {
   }
 }
 
-export const logger = new Logger();
+const executorLogger = new Logger();
+export { executorLogger as logger };
 `;
 
       const utilsDir = path.join(this.projectRoot, 'src/utils');

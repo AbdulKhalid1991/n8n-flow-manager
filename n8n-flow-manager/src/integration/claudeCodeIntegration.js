@@ -1,30 +1,46 @@
 import { claudeCodeAPI } from './claudeCodeAPI.js';
+import { mcpBridge } from './mcpBridge.js';
+import { workflowRepository } from './workflowRepository.js';
 
 export class ClaudeCodeIntegration {
   constructor() {
     this.api = claudeCodeAPI;
+    this.mcpBridge = mcpBridge;
+    this.workflowRepository = workflowRepository;
     this.contextStack = [];
     this.conversationMemory = new Map();
     this.taskQueue = [];
     this.activeTask = null;
+    this.mcpInitialized = false;
+    this.workflowRepoInitialized = false;
   }
 
   // Main entry point for Claude Code to execute n8n flow manager tasks
   async executeTask(instruction, context = {}) {
     try {
+      // Initialize MCP Bridge if not already done
+      if (!this.mcpInitialized) {
+        await this.initializeMCP();
+      }
+
+      // Initialize Workflow Repository if not already done
+      if (!this.workflowRepoInitialized) {
+        await this.initializeWorkflowRepository();
+      }
+
       // Add to context stack
       this.contextStack.push({ instruction, context, timestamp: Date.now() });
       
-      // Parse and route the instruction
+      // Parse and route the instruction with MCP enhancement
       const task = await this.parseAndRouteInstruction(instruction, context);
       
-      // Execute the task
+      // Execute the task with MCP support
       const result = await this.executeInternalTask(task);
       
       // Store conversation memory
       this.storeConversationMemory(instruction, result);
       
-      // Generate comprehensive response
+      // Generate comprehensive response with MCP insights
       return this.generateClaudeCodeResponse(result, task);
       
     } catch (error) {
@@ -35,9 +51,44 @@ export class ClaudeCodeIntegration {
         suggestions: [
           'Check if n8n Flow Manager is properly configured',
           'Verify the instruction is clear and specific',
-          'Try breaking down complex requests into smaller steps'
+          'Try breaking down complex requests into smaller steps',
+          'Consider using MCP-enhanced workflow assistance'
         ]
       };
+    }
+  }
+
+  // Initialize MCP Bridge
+  async initializeMCP() {
+    try {
+      const mcpResult = await this.mcpBridge.initialize();
+      this.mcpInitialized = mcpResult.success;
+      
+      if (this.mcpInitialized) {
+        console.log('✅ MCP Bridge initialized - AI-enhanced workflow support enabled');
+      } else {
+        console.log('⚠️ MCP Bridge not available - using standard workflow management');
+      }
+    } catch (error) {
+      console.log('⚠️ MCP initialization failed:', error.message);
+      this.mcpInitialized = false;
+    }
+  }
+
+  // Initialize Workflow Repository
+  async initializeWorkflowRepository() {
+    try {
+      const repoResult = await this.workflowRepository.initialize();
+      this.workflowRepoInitialized = repoResult.success;
+      
+      if (this.workflowRepoInitialized) {
+        console.log(`✅ Workflow Repository initialized - ${repoResult.totalWorkflows} reference workflows available`);
+      } else {
+        console.log('⚠️ Workflow Repository not available - using basic workflow generation');
+      }
+    } catch (error) {
+      console.log('⚠️ Workflow Repository initialization failed:', error.message);
+      this.workflowRepoInitialized = false;
     }
   }
 
@@ -134,6 +185,64 @@ export class ClaudeCodeIntegration {
       'verify connection', 'n8n connection'
     ])) {
       return 'connection_test';
+    }
+
+    // MCP-Enhanced Operations
+    if (this.matchesPattern(instruction_lower, [
+      'search nodes', 'find nodes', 'node search', 'available nodes',
+      'what nodes', 'which nodes', 'node types'
+    ])) {
+      return 'mcp_node_search';
+    }
+
+    if (this.matchesPattern(instruction_lower, [
+      'node info', 'node details', 'node properties', 'how to use',
+      'node configuration', 'node parameters'
+    ])) {
+      return 'mcp_node_info';
+    }
+
+    if (this.matchesPattern(instruction_lower, [
+      'validate workflow', 'check workflow', 'workflow validation',
+      'verify workflow', 'workflow errors'
+    ])) {
+      return 'mcp_workflow_validation';
+    }
+
+    if (this.matchesPattern(instruction_lower, [
+      'generate workflow', 'create workflow', 'build workflow',
+      'workflow for', 'automate task', 'ai workflow'
+    ])) {
+      return 'mcp_workflow_generation';
+    }
+
+    if (this.matchesPattern(instruction_lower, [
+      'enhance workflow', 'optimize workflow', 'improve workflow',
+      'workflow suggestions', 'workflow optimization', 'ai enhance'
+    ])) {
+      return 'mcp_workflow_enhancement';
+    }
+
+    // Workflow Repository Operations
+    if (this.matchesPattern(instruction_lower, [
+      'search workflows', 'find workflow templates', 'workflow examples',
+      'reference workflows', 'similar workflows', 'workflow library'
+    ])) {
+      return 'workflow_search';
+    }
+
+    if (this.matchesPattern(instruction_lower, [
+      'workflow recommendations', 'suggest workflows', 'recommend workflow',
+      'workflow for task', 'best workflow for', 'workflow templates for'
+    ])) {
+      return 'workflow_recommendations';
+    }
+
+    if (this.matchesPattern(instruction_lower, [
+      'create workflow based on', 'generate workflow using', 'workflow from template',
+      'build workflow like', 'copy workflow structure', 'use workflow as reference'
+    ])) {
+      return 'reference_based_generation';
     }
 
     return 'general_query';
@@ -245,6 +354,32 @@ export class ClaudeCodeIntegration {
         
         case 'general_query':
           return await this.executeGeneralQuery(task);
+
+        // MCP-Enhanced Operations
+        case 'mcp_node_search':
+          return await this.executeMCPNodeSearch(task);
+
+        case 'mcp_node_info':
+          return await this.executeMCPNodeInfo(task);
+
+        case 'mcp_workflow_validation':
+          return await this.executeMCPWorkflowValidation(task);
+
+        case 'mcp_workflow_generation':
+          return await this.executeMCPWorkflowGeneration(task);
+
+        case 'mcp_workflow_enhancement':
+          return await this.executeMCPWorkflowEnhancement(task);
+
+        // Workflow Repository Operations
+        case 'workflow_search':
+          return await this.executeWorkflowSearch(task);
+
+        case 'workflow_recommendations':
+          return await this.executeWorkflowRecommendations(task);
+
+        case 'reference_based_generation':
+          return await this.executeReferenceBasedGeneration(task);
         
         default:
           throw new Error(`Unknown task type: ${task.type}`);
@@ -426,12 +561,8 @@ export class ClaudeCodeIntegration {
     // Handle general queries about capabilities
     const commands = await this.api.getAvailableCommands();
     
-    return {
-      success: true,
-      taskType: 'general_query',
-      message: 'I can help you manage n8n workflows with various operations',
-      availableCommands: commands.commands,
-      examples: [
+    const capabilities = {
+      standard: [
         'Analyze the system for issues',
         'Export all workflows',
         'Test workflow abc123',
@@ -439,9 +570,477 @@ export class ClaudeCodeIntegration {
         'Fix all critical issues',
         'List active workflows'
       ],
+      mcpEnhanced: this.mcpInitialized ? [
+        'Search available n8n nodes',
+        'Get detailed node information',
+        'Validate workflow structure',
+        'Generate AI-powered workflows',
+        'Enhance existing workflows',
+        'Get node usage recommendations'
+      ] : [],
+      workflowRepository: this.workflowRepoInitialized ? [
+        'Search workflow templates from 7,453+ references',
+        'Get workflow recommendations for specific tasks',
+        'Create workflows based on existing templates',
+        'Find similar workflows for your use case',
+        'Access high-quality workflow examples'
+      ] : []
+    };
+    
+    return {
+      success: true,
+      taskType: 'general_query',
+      message: 'I can help you manage n8n workflows with various operations' + 
+               (this.mcpInitialized ? ' including AI-enhanced features' : '') +
+               (this.workflowRepoInitialized ? ' and access to 7,453+ workflow templates' : ''),
+      availableCommands: commands.commands,
+      examples: [...capabilities.standard, ...capabilities.mcpEnhanced, ...capabilities.workflowRepository],
+      mcpEnhanced: this.mcpInitialized,
+      workflowRepository: this.workflowRepoInitialized,
       executedAt: new Date().toISOString(),
       parameters: task.parameters
     };
+  }
+
+  // MCP-Enhanced Execution Methods
+
+  async executeMCPNodeSearch(task) {
+    if (!this.mcpInitialized) {
+      return {
+        success: false,
+        taskType: 'mcp_node_search',
+        message: 'MCP Bridge not available. Using standard search.',
+        fallback: true
+      };
+    }
+
+    const query = task.parameters.query || 
+                  task.originalInstruction.replace(/search|find|nodes?/gi, '').trim() ||
+                  'http';
+    
+    const searchResult = await this.mcpBridge.searchNodes(query, {
+      limit: task.parameters.limit || 10,
+      includeAI: task.parameters.includeAI !== false
+    });
+    
+    return {
+      ...searchResult,
+      taskType: 'mcp_node_search',
+      executedAt: new Date().toISOString(),
+      parameters: task.parameters
+    };
+  }
+
+  async executeMCPNodeInfo(task) {
+    if (!this.mcpInitialized) {
+      return {
+        success: false,
+        taskType: 'mcp_node_info',
+        message: 'MCP Bridge not available. Please specify node type for basic info.',
+        fallback: true
+      };
+    }
+
+    const nodeType = task.parameters.nodeType || 
+                     this.extractNodeTypeFromInstruction(task.originalInstruction);
+    
+    if (!nodeType) {
+      return {
+        success: false,
+        taskType: 'mcp_node_info',
+        message: 'Please specify which node you want information about',
+        suggestion: 'Try: "Get info for HTTP Request node"'
+      };
+    }
+    
+    const nodeInfo = await this.mcpBridge.getNodeInfo(nodeType, {
+      includeExamples: task.parameters.includeExamples !== false,
+      includeDocumentation: task.parameters.includeDocumentation !== false
+    });
+    
+    return {
+      ...nodeInfo,
+      taskType: 'mcp_node_info',
+      executedAt: new Date().toISOString(),
+      parameters: task.parameters
+    };
+  }
+
+  async executeMCPWorkflowValidation(task) {
+    if (!this.mcpInitialized) {
+      return {
+        success: false,
+        taskType: 'mcp_workflow_validation',
+        message: 'MCP Bridge not available. Using basic workflow validation.',
+        fallback: true
+      };
+    }
+
+    const workflowId = task.parameters.workflowId || 
+                       this.extractWorkflowIdFromInstruction(task.originalInstruction);
+    
+    if (!workflowId) {
+      return {
+        success: false,
+        taskType: 'mcp_workflow_validation',
+        message: 'Please specify which workflow to validate',
+        suggestion: 'Try: "Validate workflow abc123"'
+      };
+    }
+
+    // Get workflow from n8n first
+    const workflowData = await this.api.getWorkflow(workflowId);
+    if (!workflowData.success) {
+      return {
+        success: false,
+        taskType: 'mcp_workflow_validation',
+        message: `Could not retrieve workflow ${workflowId}`,
+        error: workflowData.error
+      };
+    }
+
+    const validation = await this.mcpBridge.validateWorkflow(workflowData.workflow, {
+      strict: task.parameters.strict !== false,
+      includePerformance: task.parameters.includePerformance !== false
+    });
+    
+    return {
+      ...validation,
+      taskType: 'mcp_workflow_validation',
+      executedAt: new Date().toISOString(),
+      parameters: task.parameters
+    };
+  }
+
+  async executeMCPWorkflowGeneration(task) {
+    if (!this.mcpInitialized) {
+      return {
+        success: false,
+        taskType: 'mcp_workflow_generation',
+        message: 'MCP Bridge not available. Cannot generate AI-powered workflows.',
+        fallback: true
+      };
+    }
+
+    const taskDescription = task.originalInstruction.replace(/generate|create|build|workflow/gi, '').trim();
+    
+    if (!taskDescription) {
+      return {
+        success: false,
+        taskType: 'mcp_workflow_generation',
+        message: 'Please describe what you want the workflow to do',
+        suggestion: 'Try: "Generate workflow to send daily reports via email"'
+      };
+    }
+
+    const generation = await this.mcpBridge.generateWorkflowSuggestions(taskDescription, {
+      complexity: task.parameters.complexity || 'medium',
+      includeErrorHandling: task.parameters.includeErrorHandling !== false,
+      targetPlatform: task.parameters.targetPlatform || 'n8n'
+    });
+    
+    return {
+      ...generation,
+      taskType: 'mcp_workflow_generation',
+      executedAt: new Date().toISOString(),
+      parameters: task.parameters
+    };
+  }
+
+  async executeMCPWorkflowEnhancement(task) {
+    if (!this.mcpInitialized) {
+      return {
+        success: false,
+        taskType: 'mcp_workflow_enhancement',
+        message: 'MCP Bridge not available. Using basic enhancement suggestions.',
+        fallback: true
+      };
+    }
+
+    const workflowId = task.parameters.workflowId || 
+                       this.extractWorkflowIdFromInstruction(task.originalInstruction);
+    
+    if (!workflowId) {
+      return {
+        success: false,
+        taskType: 'mcp_workflow_enhancement',
+        message: 'Please specify which workflow to enhance',
+        suggestion: 'Try: "Enhance workflow abc123"'
+      };
+    }
+
+    const enhancementType = task.parameters.enhancementType || 
+                           this.extractEnhancementTypeFromInstruction(task.originalInstruction) ||
+                           'optimize';
+
+    const enhancement = await this.mcpBridge.enhanceWorkflow(workflowId, enhancementType);
+    
+    return {
+      ...enhancement,
+      taskType: 'mcp_workflow_enhancement',
+      executedAt: new Date().toISOString(),
+      parameters: task.parameters
+    };
+  }
+
+  // Helper methods for MCP operations
+  
+  extractNodeTypeFromInstruction(instruction) {
+    const nodePatterns = [
+      /node[:\s]+([a-zA-Z0-9\-\.\_]+)/i,
+      /(http|webhook|email|slack|google|database|function|if|switch|merge|split)/i,
+      /([a-zA-Z0-9\-]+)\s+node/i
+    ];
+    
+    for (const pattern of nodePatterns) {
+      const match = instruction.match(pattern);
+      if (match) {
+        return match[1].toLowerCase();
+      }
+    }
+    
+    return null;
+  }
+
+  extractWorkflowIdFromInstruction(instruction) {
+    const patterns = [
+      /workflow[:\s]+([a-zA-Z0-9]{16})/i,
+      /([a-zA-Z0-9]{16})/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = instruction.match(pattern);
+      if (match) {
+        return match[1];
+      }
+    }
+    
+    return null;
+  }
+
+  extractEnhancementTypeFromInstruction(instruction) {
+    const instruction_lower = instruction.toLowerCase();
+    
+    if (instruction_lower.includes('optimize') || instruction_lower.includes('performance')) {
+      return 'optimize';
+    }
+    if (instruction_lower.includes('error') || instruction_lower.includes('handling')) {
+      return 'error_handling';
+    }
+    if (instruction_lower.includes('monitor') || instruction_lower.includes('logging')) {
+      return 'monitoring';
+    }
+    if (instruction_lower.includes('security') || instruction_lower.includes('secure')) {
+      return 'security';
+    }
+    
+    return 'optimize';
+  }
+
+  // Workflow Repository Execution Methods
+
+  async executeWorkflowSearch(task) {
+    if (!this.workflowRepoInitialized) {
+      return {
+        success: false,
+        taskType: 'workflow_search',
+        message: 'Workflow Repository not available. Cannot search reference workflows.',
+        fallback: true
+      };
+    }
+
+    const query = task.parameters.query || 
+                  task.originalInstruction.replace(/search|find|workflows?|templates?/gi, '').trim();
+    
+    if (!query) {
+      return {
+        success: false,
+        taskType: 'workflow_search',
+        message: 'Please specify what type of workflows to search for',
+        suggestion: 'Try: "Search for email notification workflows"'
+      };
+    }
+
+    const searchResult = await this.workflowRepository.searchWorkflows(query, {
+      limit: task.parameters.limit || 10,
+      aiOnly: task.parameters.aiOnly,
+      businessOnly: task.parameters.businessOnly,
+      minQuality: task.parameters.minQuality || 80
+    });
+
+    return {
+      ...searchResult,
+      taskType: 'workflow_search',
+      executedAt: new Date().toISOString(),
+      parameters: task.parameters
+    };
+  }
+
+  async executeWorkflowRecommendations(task) {
+    if (!this.workflowRepoInitialized) {
+      return {
+        success: false,
+        taskType: 'workflow_recommendations',
+        message: 'Workflow Repository not available. Cannot provide workflow recommendations.',
+        fallback: true
+      };
+    }
+
+    const taskDescription = task.originalInstruction
+      .replace(/workflow|recommendations?|suggest|recommend|for|task/gi, '')
+      .trim();
+    
+    if (!taskDescription) {
+      return {
+        success: false,
+        taskType: 'workflow_recommendations',
+        message: 'Please describe what task you need workflow recommendations for',
+        suggestion: 'Try: "Recommend workflows for sending daily reports"'
+      };
+    }
+
+    const recommendations = await this.workflowRepository.getWorkflowRecommendations(taskDescription, {
+      count: task.parameters.count || 5,
+      includeAI: task.parameters.includeAI !== false,
+      includeBusiness: task.parameters.includeBusiness !== false
+    });
+
+    return {
+      ...recommendations,
+      taskType: 'workflow_recommendations',
+      executedAt: new Date().toISOString(),
+      parameters: task.parameters
+    };
+  }
+
+  async executeReferenceBasedGeneration(task) {
+    if (!this.workflowRepoInitialized) {
+      return {
+        success: false,
+        taskType: 'reference_based_generation',
+        message: 'Workflow Repository not available. Cannot generate workflows from references.',
+        fallback: true
+      };
+    }
+
+    const instruction = task.originalInstruction;
+    let referenceQuery, newTaskDescription;
+
+    // Extract reference and new task from instruction
+    if (instruction.includes('based on') || instruction.includes('like')) {
+      const parts = instruction.split(/based on|like/i);
+      if (parts.length >= 2) {
+        newTaskDescription = parts[0].replace(/create|generate|workflow|build/gi, '').trim();
+        referenceQuery = parts[1].trim();
+      }
+    } else if (instruction.includes('using')) {
+      const parts = instruction.split(/using/i);
+      if (parts.length >= 2) {
+        newTaskDescription = parts[0].replace(/create|generate|workflow|build/gi, '').trim();
+        referenceQuery = parts[1].replace(/template|workflow|as reference/gi, '').trim();
+      }
+    }
+
+    if (!referenceQuery || !newTaskDescription) {
+      return {
+        success: false,
+        taskType: 'reference_based_generation',
+        message: 'Please specify both the reference workflow and new task',
+        suggestion: 'Try: "Create workflow for data backup based on email notification workflow"'
+      };
+    }
+
+    // Search for reference workflows
+    const searchResult = await this.workflowRepository.searchWorkflows(referenceQuery, {
+      limit: 3,
+      minQuality: 85
+    });
+
+    if (!searchResult.success || searchResult.results.length === 0) {
+      return {
+        success: false,
+        taskType: 'reference_based_generation',
+        message: `Could not find reference workflows for: "${referenceQuery}"`,
+        suggestion: 'Try searching with different keywords or check available workflow templates'
+      };
+    }
+
+    // Generate new workflow based on reference
+    const referenceWorkflow = searchResult.results[0];
+    const generatedWorkflow = await this.generateWorkflowFromReference(
+      referenceWorkflow,
+      newTaskDescription,
+      task.parameters
+    );
+
+    return {
+      success: true,
+      taskType: 'reference_based_generation',
+      referenceWorkflow: referenceWorkflow,
+      generatedWorkflow: generatedWorkflow,
+      task: newTaskDescription,
+      referenceQuery: referenceQuery,
+      executedAt: new Date().toISOString(),
+      parameters: task.parameters
+    };
+  }
+
+  async generateWorkflowFromReference(referenceWorkflow, newTask, options = {}) {
+    // This is where we combine MCP and reference workflow to generate new workflow
+    const enhancedGeneration = {
+      name: `${newTask} (Based on ${referenceWorkflow.name})`,
+      description: `AI-generated workflow for ${newTask}, using ${referenceWorkflow.name} as reference`,
+      reference: {
+        source: referenceWorkflow.source,
+        original: referenceWorkflow.name,
+        quality: referenceWorkflow.quality,
+        nodeCount: referenceWorkflow.nodeCount
+      },
+      nodes: this.adaptNodesForNewTask(referenceWorkflow, newTask),
+      connections: this.adaptConnectionsForNewTask(referenceWorkflow, newTask),
+      metadata: {
+        generatedAt: new Date().toISOString(),
+        generationMethod: 'reference-based',
+        confidence: this.calculateGenerationConfidence(referenceWorkflow, newTask),
+        customizations: this.suggestCustomizations(referenceWorkflow, newTask)
+      }
+    };
+
+    return enhancedGeneration;
+  }
+
+  adaptNodesForNewTask(referenceWorkflow, newTask) {
+    // Mock implementation - in production this would intelligently adapt nodes
+    const baseNodes = referenceWorkflow.nodes || [];
+    return baseNodes.map(node => ({
+      ...node,
+      name: node.name.replace(/reference|original/gi, 'adapted'),
+      adapted: true,
+      adaptationReason: `Modified for task: ${newTask}`
+    }));
+  }
+
+  adaptConnectionsForNewTask(referenceWorkflow, newTask) {
+    // Mock implementation - adapt connections based on new task requirements
+    return referenceWorkflow.connections || {};
+  }
+
+  calculateGenerationConfidence(referenceWorkflow, newTask) {
+    // Calculate confidence based on reference quality and task similarity
+    const baseConfidence = referenceWorkflow.quality || 70;
+    const taskRelevance = this.calculateTaskRelevance(referenceWorkflow, newTask);
+    
+    return Math.min(95, baseConfidence + (taskRelevance * 0.1));
+  }
+
+  suggestCustomizations(referenceWorkflow, newTask) {
+    return [
+      'Update node parameters based on your specific requirements',
+      'Configure credentials for any new services',
+      'Test the workflow thoroughly before production use',
+      'Consider adding error handling if not present',
+      'Customize trigger conditions for your use case'
+    ];
   }
 
   generateClaudeCodeResponse(result, task) {
@@ -539,10 +1138,10 @@ export class ClaudeCodeIntegration {
 
       case 'workflow_enhancement':
         const workflowName = result.workflowName || 'Unknown';
-        const issues = result.issues || 0;
+        const workflowIssues = result.issues || 0;
         const suggestions = result.suggestions || 0;
         const optimizations = result.optimizations || 0;
-        return `⚡ Workflow "${workflowName}" analysis: ${issues} issues, ${suggestions} suggestions, ${optimizations} optimizations available.`;
+        return `⚡ Workflow "${workflowName}" analysis: ${workflowIssues} issues, ${suggestions} suggestions, ${optimizations} optimizations available.`;
 
       case 'connection_test':
         const connectionStatus = result.connectionStatus || 'unknown';

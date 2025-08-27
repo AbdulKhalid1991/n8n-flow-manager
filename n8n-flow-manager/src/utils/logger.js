@@ -66,7 +66,7 @@ const transports = [
 ];
 
 // Create the logger instance
-const logger = winston.createLogger({
+const winstonLogger = winston.createLogger({
   levels,
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.json(),
@@ -95,7 +95,7 @@ if (!fs.existsSync(logsDir)) {
 export class Logger {
   constructor(module = 'n8n-flow-manager') {
     this.module = module;
-    this.logger = logger;
+    this.logger = winstonLogger;
   }
 
   // Format message with module context
@@ -234,18 +234,20 @@ export class Logger {
 }
 
 // Default logger instance
-export const logger = new Logger();
+const loggerInstance = new Logger();
 
 // Module-specific logger factory
 export const createLogger = (module) => new Logger(module);
 
 // Legacy console replacement (for gradual migration)
 export const console = {
-  log: (message, ...args) => logger.info(message, { args }),
-  info: (message, ...args) => logger.info(message, { args }),
-  warn: (message, ...args) => logger.warn(message, { args }),
-  error: (message, ...args) => logger.error(message, { args }),
-  debug: (message, ...args) => logger.debug(message, { args })
+  log: (message, ...args) => loggerInstance.info(message, { args }),
+  info: (message, ...args) => loggerInstance.info(message, { args }),
+  warn: (message, ...args) => loggerInstance.warn(message, { args }),
+  error: (message, ...args) => loggerInstance.error(message, { args }),
+  debug: (message, ...args) => loggerInstance.debug(message, { args })
 };
 
-export default logger;
+// Export both named and default exports
+export const logger = loggerInstance;
+export default loggerInstance;

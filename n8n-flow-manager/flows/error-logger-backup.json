@@ -1,0 +1,226 @@
+{
+  "createdAt": "2025-04-21T10:03:01.438Z",
+  "updatedAt": "2025-08-26T12:01:23.000Z",
+  "id": "sZcyBIs3WLEqgJin",
+  "name": "Error Logger",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "50e5648e-3a4d-4a58-865d-54fec33e852e",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1P3YvKTvhAP0y2r6X1njCKVkw75yF6Dv3egDGcka05LA",
+          "mode": "list",
+          "cachedResultName": "Error Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1P3YvKTvhAP0y2r6X1njCKVkw75yF6Dv3egDGcka05LA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1P3YvKTvhAP0y2r6X1njCKVkw75yF6Dv3egDGcka05LA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now.format('yyyy-MM-dd hh:mm:ss a') }}",
+            "Workflow": "={{ $json.workflow.name }}",
+            "URL": "={{ $json.execution.url }}",
+            "Node": "={{ $json.execution.lastNodeExecuted }}",
+            "Error Message": "={{ $json.execution.error.message }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Node",
+              "displayName": "Node",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Error Message",
+              "displayName": "Error Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        200,
+        -140
+      ],
+      "id": "e1fde88b-696b-4836-b74d-3eb04c8ef8f0",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pcXJ59pr547q5EPJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5078570533",
+        "text": "={{ $json.workflow.name }} : {{ $json.execution.error.message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "cd641e5e-764f-4741-ab23-244fd7f39a0b",
+      "name": "Telegram",
+      "webhookId": "8ed0a959-f140-40f0-be9c-b76b794999ad",
+      "credentials": {
+        "telegramApi": {
+          "id": "eh2NKJ59eDynEPsG",
+          "name": "Work Flow Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "6f6f77fc-7276-458c-880d-ea6aa3bfe990",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "createdAt": "2025-04-21T10:03:01.472Z",
+      "updatedAt": "2025-04-21T10:03:01.472Z",
+      "role": "workflow:owner",
+      "workflowId": "sZcyBIs3WLEqgJin",
+      "projectId": "4TYxnAzXZBXHlAJs",
+      "project": {
+        "createdAt": "2025-04-14T18:51:04.042Z",
+        "updatedAt": "2025-04-16T09:10:08.831Z",
+        "id": "4TYxnAzXZBXHlAJs",
+        "name": "Abdul khalid <abdulkhalid.hm@outlook.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-04-14T18:51:04.043Z",
+            "updatedAt": "2025-04-14T18:51:04.043Z",
+            "role": "project:personalOwner",
+            "userId": "1e0d942b-1e02-4fbd-9513-109c5231befa",
+            "projectId": "4TYxnAzXZBXHlAJs",
+            "user": {
+              "createdAt": "2025-04-14T18:51:02.978Z",
+              "updatedAt": "2025-08-26T11:46:39.000Z",
+              "id": "1e0d942b-1e02-4fbd-9513-109c5231befa",
+              "email": "abdulkhalid.hm@outlook.com",
+              "firstName": "Abdul",
+              "lastName": "khalid",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-04-16T09:12:06.670Z",
+                "personalization_survey_n8n_version": "1.88.0",
+                "companySize": "<20",
+                "companyType": "saas",
+                "role": "business-owner",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "H38nkCdus9kCjulv",
+                "userActivatedAt": 1745308828048,
+                "npsSurvey": {
+                  "waitingForResponse": true,
+                  "ignoredCount": 1,
+                  "lastShownAt": 1754750149089
+                }
+              },
+              "role": "global:owner",
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-08-26",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}

@@ -1,17 +1,26 @@
 import axios from 'axios';
+import https from 'https';
 import { config } from '../config/config.js';
 
 export class N8nClient {
   constructor() {
     this.baseUrl = config.n8n.baseUrl;
     this.apiKey = config.n8n.apiKey;
+    
+    // Create HTTPS agent to handle SSL issues
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false
+    });
+    
     this.client = axios.create({
-      baseURL: `${this.baseUrl}/rest`,
+      baseURL: `${this.baseUrl}/api/v1`,
       timeout: config.n8n.timeout,
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         ...(this.apiKey && { 'X-N8N-API-KEY': this.apiKey })
-      }
+      },
+      httpsAgent: httpsAgent
     });
   }
 

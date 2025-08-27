@@ -1,0 +1,170 @@
+{
+  "name": "Error Logger 26sep25",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "error-trigger-node",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Enhanced Error Processing for Error Logger 26sep25\nconst errorData = items[0].json;\nconst timestamp = new Date().toISOString();\n\n// Process and classify the error\nconst processedError = {\n  timestamp: timestamp,\n  date: timestamp.split('T')[0],\n  time: timestamp.split('T')[1].split('.')[0],\n  \n  // Workflow context\n  workflowId: errorData.workflow?.id || 'Unknown',\n  workflowName: errorData.workflow?.name || 'Unknown Workflow',\n  workflowActive: errorData.workflow?.active || false,\n  \n  // Node context\n  nodeId: errorData.node?.id || 'Unknown',\n  nodeName: errorData.node?.name || 'Unknown Node',\n  nodeType: errorData.node?.type || 'Unknown Type',\n  \n  // Error details\n  errorMessage: errorData.error?.message || 'No error message',\n  errorName: errorData.error?.name || 'Unknown Error',\n  errorType: errorData.error?.type || 'Runtime Error',\n  \n  // Classification\n  severity: classifyErrorSeverity(errorData.error?.message || ''),\n  category: categorizeError(errorData.error?.message || '', errorData.node?.type || ''),\n  priority: getPriority(errorData.error?.message || ''),\n  \n  // Recovery information\n  suggestion: generateRecoverySuggestion(errorData.error?.message || '', errorData.node?.type || ''),\n  actionable: isActionable(errorData.error?.message || ''),\n  \n  // Execution context\n  executionId: errorData.execution?.id || 'Unknown',\n  executionMode: errorData.execution?.mode || 'Unknown',\n  retryCount: errorData.execution?.retryOf ? 'Retry' : 'Initial'\n};\n\nfunction classifyErrorSeverity(errorMessage) {\n  const msg = errorMessage.toLowerCase();\n  if (msg.includes('critical') || msg.includes('fatal')) return 'Critical';\n  if (msg.includes('timeout') || msg.includes('connection refused')) return 'High';\n  if (msg.includes('authentication') || msg.includes('permission denied')) return 'High';\n  if (msg.includes('not found') || msg.includes('invalid')) return 'Medium';\n  return 'Low';\n}\n\nfunction categorizeError(errorMessage, nodeType) {\n  const msg = errorMessage.toLowerCase();\n  const type = nodeType.toLowerCase();\n  \n  if (msg.includes('network') || msg.includes('connection') || msg.includes('timeout')) return 'Network';\n  if (msg.includes('auth') || msg.includes('permission') || msg.includes('unauthorized')) return 'Authentication';\n  if (msg.includes('json') || msg.includes('parse') || msg.includes('format')) return 'Data Processing';\n  if (msg.includes('database') || msg.includes('sql')) return 'Database';\n  if (type.includes('http') || type.includes('webhook')) return 'API Integration';\n  return 'Application Logic';\n}\n\nfunction getPriority(errorMessage) {\n  const severity = classifyErrorSeverity(errorMessage);\n  const msg = errorMessage.toLowerCase();\n  \n  if (severity === 'Critical') return 'P1 - Critical';\n  if (severity === 'High' || msg.includes('production')) return 'P2 - High';\n  if (severity === 'Medium') return 'P3 - Medium';\n  return 'P4 - Low';\n}\n\nfunction generateRecoverySuggestion(errorMessage, nodeType) {\n  const msg = errorMessage.toLowerCase();\n  \n  if (msg.includes('timeout')) return 'Increase timeout value, check network connectivity, or implement retry logic';\n  if (msg.includes('authentication') || msg.includes('unauthorized')) return 'Verify API credentials, check token expiration, or refresh authentication';\n  if (msg.includes('not found')) return 'Verify endpoint URLs, check resource existence, or update configuration';\n  if (msg.includes('json') || msg.includes('parse')) return 'Validate data format, check JSON syntax, or add data transformation';\n  if (msg.includes('connection')) return 'Check network connectivity, verify service availability, or implement circuit breaker';\n  if (msg.includes('rate limit')) return 'Implement rate limiting, add delays between requests, or use different API tier';\n  return 'Review error context, check node configuration, or consult documentation';\n}\n\nfunction isActionable(errorMessage) {\n  const msg = errorMessage.toLowerCase();\n  const nonActionable = ['syntax error', 'undefined variable', 'null reference'];\n  return !nonActionable.some(term => msg.includes(term));\n}\n\nreturn { json: processedError };"
+      },
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        300,
+        300
+      ],
+      "id": "error-processor-node",
+      "name": "Enhanced Error Processor"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1P3YvKTvhAP0y2r6X1njCKVkw75yF6Dv3egDGcka05LA",
+          "mode": "list",
+          "cachedResultName": "Error Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1P3YvKTvhAP0y2r6X1njCKVkw75yF6Dv3egDGcka05LA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1P3YvKTvhAP0y2r6X1njCKVkw75yF6Dv3egDGcka05LA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "values": {
+            "Timestamp": "={{$json.timestamp}}",
+            "Date": "={{$json.date}}",
+            "Time": "={{$json.time}}",
+            "Workflow": "={{$json.workflowName}}",
+            "Node": "={{$json.nodeName}}",
+            "Node Type": "={{$json.nodeType}}",
+            "Error Message": "={{$json.errorMessage}}",
+            "Severity": "={{$json.severity}}",
+            "Category": "={{$json.category}}",
+            "Priority": "={{$json.priority}}",
+            "Suggestion": "={{$json.suggestion}}",
+            "Actionable": "={{$json.actionable}}",
+            "Execution ID": "={{$json.executionId}}",
+            "Retry Status": "={{$json.retryCount}}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        500,
+        200
+      ],
+      "id": "google-sheets-node",
+      "name": "Enhanced Google Sheets Logger",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pcXJ59pr547q5EPJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5078570533",
+        "text": "🚨 *Error Alert - {{$json.priority}}*\n\n📊 *Workflow:* {{$json.workflowName}}\n⚙️ *Node:* {{$json.nodeName}} ({{$json.nodeType}})\n🕒 *Time:* {{$json.time}}\n📂 *Category:* {{$json.category}}\n⚡ *Severity:* {{$json.severity}}\n\n❌ *Error:* {{$json.errorMessage}}\n\n💡 *Suggestion:* {{$json.suggestion}}\n✅ *Actionable:* {{$json.actionable}}\n\n🔗 *Execution:* {{$json.executionId}}\n🔄 *Retry:* {{$json.retryCount}}",
+        "additionalFields": {},
+        "parseMode": "Markdown"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        500,
+        400
+      ],
+      "id": "telegram-node",
+      "name": "Enhanced Telegram Alert",
+      "webhookId": "8ed0a959-f140-40f0-be9c-b76b794999ad",
+      "credentials": {
+        "telegramApi": {
+          "id": "eh2NKJ59eDynEPsG",
+          "name": "Work Flow Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "send",
+        "operation": "send",
+        "to": "abdulkhalid.hm@outlook.com",
+        "subject": "🚨 {{$json.priority}} Error - {{$json.workflowName}}",
+        "text": "{{$json.priority}} Error Detected in n8n\n\nWorkflow: {{$json.workflowName}}\nNode: {{$json.nodeName}} ({{$json.nodeType}})\nTimestamp: {{$json.timestamp}}\n\nError Details:\n- Severity: {{$json.severity}}\n- Category: {{$json.category}}\n- Message: {{$json.errorMessage}}\n\nRecovery Suggestion:\n{{$json.suggestion}}\n\nExecution Information:\n- ID: {{$json.executionId}}\n- Mode: {{$json.executionMode}}\n- Retry Status: {{$json.retryCount}}\n\nActionable: {{$json.actionable}}\n\nThis is an automated alert from your n8n Error Logger 26sep25.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        700,
+        300
+      ],
+      "id": "email-alert-node",
+      "name": "Critical Error Email"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Enhanced Error Processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enhanced Error Processor": {
+      "main": [
+        [
+          {
+            "node": "Enhanced Google Sheets Logger",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Enhanced Telegram Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Critical Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "active": false,
+  "versionId": "4a7aa730-6b0f-4f69-8ca4-98041dbe6b4d",
+  "id": "iRYToRJdOxGADH7h",
+  "meta": null,
+  "pinData": null,
+  "createdAt": "2025-08-26T14:43:33.737Z",
+  "updatedAt": "2025-08-26T14:43:33.737Z",
+  "isArchived": false,
+  "triggerCount": 0
+}

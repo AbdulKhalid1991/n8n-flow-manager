@@ -11,7 +11,19 @@
       "Bash(git add:*)",
       "Bash(gh:*)",
       "Bash(rm:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm run:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git clone:*)",
+      "Bash(npx @czlonkowski/n8n-mcp:*)",
+      "WebSearch",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_navigate",
+      "Bash(npx:*)",
+      "Bash(/mcp)",
+      "Bash(where mcp)",
+      "Bash(echo $N8N_API_URL)"
     ],
     "deny": [],
     "ask": []
